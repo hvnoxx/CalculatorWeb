@@ -1,22 +1,249 @@
 <!doctype html>
 <html lang="en">
   <head>
-    <!-- figma:head-start -->
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#11120D" />
     <meta
       name="description"
-      content="Foxlab student assignments: unit conversion, income tax, natural numbers, and payroll."
+      content="Calculator by Nick offers unit conversion, income tax, natural numbers, and payroll tools."
     />
-    <link rel="icon" type="image/png" href="/favicon.png" />
-    <title>Foxlab | Student Assignments</title>
-    <!-- figma:head-end -->
+    <link rel="icon" type="image/png" href="assets/favicon.png" />
+    <link rel="stylesheet" href="style.css" />
+    <title>Calculator by Nick</title>
   </head>
   <body>
-    <!-- figma:body-start -->
-    <div id="root"></div>
-    <script type="module" src="/src/main.js"></script>
-    <!-- figma:body-end -->
+    <div class="app-shell">
+      <div class="calculator-console">
+        <header class="topbar">
+          <button type="button" class="brand" data-home-button="true" aria-label="Calculator by Nick home">
+            <img src="assets/fox-logo-transparent.png" alt="" />
+            <span class="brand-copy">
+              <span class="brand-name">Calculator <strong>by Nick</strong></span>
+              <small class="brand-bio">Don't Just Count. Fox It!</small>
+            </span>
+          </button>
+
+          <nav class="tool-tabs" aria-label="Calculator tools">
+            <button type="button" class="active" data-tool="conversion" aria-current="page">
+              <span class="nav-long">Unit Conversion</span>
+              <span class="nav-short">Convert</span>
+            </button>
+            <button type="button" data-tool="tax">
+              <span class="nav-long">Income Tax</span>
+              <span class="nav-short">Tax</span>
+            </button>
+            <button type="button" data-tool="loops">
+              <span class="nav-long">Natural Numbers</span>
+              <span class="nav-short">Loops</span>
+            </button>
+            <button type="button" data-tool="payroll">
+              <span class="nav-long">Simple Payroll</span>
+              <span class="nav-short">Payroll</span>
+            </button>
+          </nav>
+        </header>
+
+        <div class="console-body">
+          <main>
+            <section class="tool-shell" data-tool-panel="conversion">
+              <header class="tool-header">
+                <div>
+                  <h1>Unit conversion</h1>
+                  <p>Convert temperature and distance values with precise, instant results.</p>
+                </div>
+              </header>
+              <div class="workspace">
+                <div class="segmented" aria-label="Conversion category">
+                  <button type="button" class="active" data-conversion-type="temperature">Temperature</button>
+                  <button type="button" data-conversion-type="length">Distance</button>
+                </div>
+
+                <div class="conversion-grid">
+                  <div class="field-panel">
+                    <label for="convert-input" data-conversion-from-label>Celsius</label>
+                    <div class="number-input">
+                      <input id="convert-input" type="number" value="25" data-conversion-input placeholder="Enter a value" />
+                      <span data-conversion-from-symbol>°C</span>
+                    </div>
+                  </div>
+
+                  <button type="button" class="swap-button" aria-label="Switch to Fahrenheit to Celsius" data-conversion-swap>⇄</button>
+
+                  <div class="field-panel result-panel">
+                    <span class="field-label" data-conversion-to-label>Fahrenheit</span>
+                    <div class="number-input result-value">
+                      <strong data-conversion-result>77</strong>
+                      <span data-conversion-to-symbol>°F</span>
+                    </div>
+                  </div>
+                </div>
+                <p class="formula" data-conversion-formula>Formula: (°C × 9/5) + 32</p>
+              </div>
+            </section>
+
+            <section class="tool-shell" data-tool-panel="tax" hidden>
+              <header class="tool-header">
+                <div>
+                  <h1>Income tax calculator</h1>
+                  <p>Calculate annual Philippine income tax using the graduated tax schedule.</p>
+                </div>
+              </header>
+              <div class="workspace">
+                <div class="tax-layout">
+                  <div>
+                    <label class="input-label" for="taxable-income">Annual taxable income</label>
+                    <div class="currency-input">
+                      <span>₱</span>
+                      <input id="taxable-income" type="number" min="0" value="520000" data-tax-income placeholder="0.00" />
+                    </div>
+                    <p class="helper">Enter your net taxable income for the year.</p>
+
+                    <div class="tax-summary">
+                      <div>
+                        <span>Income tax due</span>
+                        <strong data-tax-due>₱60,000.00</strong>
+                      </div>
+                      <div>
+                        <span>After-tax income</span>
+                        <strong data-after-tax-income>₱460,000.00</strong>
+                      </div>
+                    </div>
+
+                    <div class="calculation-note">
+                      <span>How it was calculated</span>
+                      <p data-tax-calculation>₱30,000.00 base tax + 25% of ₱120,000.00 excess over ₱400,000.00.</p>
+                    </div>
+                  </div>
+
+                  <div class="bracket-card">
+                    <div class="card-heading">
+                      <span>Tax guide</span>
+                      <small>Annual income</small>
+                    </div>
+                    <div class="bracket-row"><span>₱0 – ₱250K</span><strong>0%</strong></div>
+                    <div class="bracket-row"><span>₱250K – ₱400K</span><strong>20%</strong></div>
+                    <div class="bracket-row"><span>₱400K – ₱800K</span><strong>25%</strong></div>
+                    <div class="bracket-row"><span>₱800K – ₱2M</span><strong>30%</strong></div>
+                    <div class="bracket-row"><span>₱2M – ₱8M</span><strong>32%</strong></div>
+                    <div class="bracket-row"><span>Over ₱8M</span><strong>35%</strong></div>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <section class="tool-shell" data-tool-panel="loops" hidden>
+              <header class="tool-header">
+                <div>
+                  <h1>Natural number lab</h1>
+                  <p>Explore the factorial, sum, and average of the first N natural numbers.</p>
+                </div>
+              </header>
+              <div class="workspace">
+                <div class="natural-input-row">
+                  <div>
+                    <label class="input-label" for="natural-number">Enter N</label>
+                    <div class="plain-input">
+                      <input id="natural-number" type="number" min="1" max="170" step="1" value="5" data-loops-input />
+                    </div>
+                  </div>
+                  <p>Use any whole number from 1 to 170.</p>
+                </div>
+
+                <div class="validation-message" data-loops-validation hidden>Please enter a whole number between 1 and 170.</div>
+                <div class="result-cards" data-loops-results>
+                  <article>
+                    <span class="method">While loop</span>
+                    <h3>Factorial</h3>
+                    <div class="big-result" data-factorial-result title="120">120</div>
+                    <p data-factorial-description>5! multiplies every natural number from 1 to 5.</p>
+                  </article>
+                  <article>
+                    <span class="method">Do while loop</span>
+                    <h3>Sum</h3>
+                    <div class="big-result" data-sum-result>15</div>
+                    <p data-sum-description>The total when 1 through 5 are added together.</p>
+                  </article>
+                  <article>
+                    <span class="method">For loop</span>
+                    <h3>Average</h3>
+                    <div class="big-result" data-average-result>3</div>
+                    <p data-average-description>The arithmetic mean of the first 5 natural numbers.</p>
+                  </article>
+                </div>
+              </div>
+            </section>
+
+            <section class="tool-shell" data-tool-panel="payroll" hidden>
+              <header class="tool-header">
+                <div>
+                  <h1>Simple payroll</h1>
+                  <p>Add employees, calculate pay automatically, and remove records by line number.</p>
+                </div>
+              </header>
+              <div class="workspace">
+                <form class="payroll-form" id="payroll-form">
+                  <div class="payroll-fields">
+                    <label>
+                      <span>Employee name</span>
+                      <input data-payroll-name placeholder="e.g. Alex Cruz" />
+                    </label>
+                    <label>
+                      <span>Days worked</span>
+                      <input type="number" min="0" step="0.5" data-payroll-days placeholder="0" />
+                    </label>
+                    <label>
+                      <span>Daily rate</span>
+                      <input type="number" min="0" step="0.01" data-payroll-rate placeholder="₱ 0.00" />
+                    </label>
+                    <label>
+                      <span>Deduction</span>
+                      <input type="number" min="0" step="0.01" data-payroll-deduction placeholder="₱ 0.00" />
+                    </label>
+                  </div>
+                  <button class="primary-button" type="submit">Add employee <span>＋</span></button>
+                </form>
+
+                <p class="status-message" data-payroll-message hidden></p>
+
+                <div class="table-card">
+                  <div class="table-title">
+                    <div>
+                      <span>Payroll list</span>
+                      <small data-employee-count>0 employees</small>
+                    </div>
+                    <strong data-total-net-pay>₱0.00 total net</strong>
+                  </div>
+                  <div class="table-scroll">
+                    <table>
+                      <thead>
+                        <tr>
+                          <th>No.</th>
+                          <th>Employee</th>
+                          <th>Days</th>
+                          <th>Daily rate</th>
+                          <th>Gross pay</th>
+                          <th>Deduction</th>
+                          <th>Net pay</th>
+                        </tr>
+                      </thead>
+                      <tbody data-payroll-rows>
+                        <tr><td class="empty-state" colspan="7"><span>No payroll entries yet</span>Add an employee above to begin your list.</td></tr>
+                      </tbody>
+                    </table>
+                  </div>
+                  <div class="delete-row">
+                    <label for="delete-line">Delete by line number</label>
+                    <input id="delete-line" type="number" min="1" data-payroll-delete placeholder="No." />
+                    <button type="button" data-payroll-delete-button disabled>Delete</button>
+                  </div>
+                </div>
+              </div>
+            </section>
+          </main>
+        </div>
+      </div>
+    </div>
+    <script src="script.js" defer></script>
   </body>
 </html>
