@@ -1,10 +1,11 @@
-import { defineConfig, type HtmlTagDescriptor, type Plugin } from "vite";
-import react from "@vitejs/plugin-react";
-import tailwindcss from "@tailwindcss/vite";
+import { defineConfig } from "vite";
 import fs from "node:fs";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 
 import siteConfiguration from "./.figma/make/site.json";
+
+const projectRoot = path.dirname(fileURLToPath(import.meta.url));
 
 // Vite config — https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
@@ -18,17 +19,14 @@ export default defineConfig(({ mode }) => {
       minify: !emitSourcemaps,
     },
     plugins: [
-      react(),
-      tailwindcss(),
       figmaSiteConfiguration(siteConfiguration),
       figmaErrorOverlayReplay(),
-      figmaReactRefreshBoundaryFallback(),
-      figmaMakeKitPlugin({ storiesGlob: "/src/**/*.stories.{ts,tsx,js,jsx}" }),
+      figmaMakeKitPlugin({ storiesGlob: "/src/**/*.stories.js" }),
       figmaLinkedPackageSourcemaps(),
     ],
     resolve: {
       alias: {
-        "@": path.resolve(__dirname, "./src"),
+        "@": path.resolve(projectRoot, "./src"),
       },
     },
     server: {
@@ -46,42 +44,15 @@ export default defineConfig(({ mode }) => {
   };
 });
 
-type FigmaSiteConfiguration = {
-  title?: string;
-  description?: string;
-  language?: string;
-  robots?: {
-    index?: boolean;
-  };
-  icons?: {
-    icon?: string;
-  };
-  openGraph?: {
-    image?: string;
-  };
-  analytics?: {
-    googleAnalyticsId?: string;
-  };
-  customScripts?: {
-    headStart?: string;
-    headEnd?: string;
-    bodyStart?: string;
-    bodyEnd?: string;
-  };
-  accessibility?: {
-    addBypassLinks?: boolean;
-  };
-};
-
 /** Applies /.figma/make/site.json to the generated document shell. */
-function figmaSiteConfiguration(config: FigmaSiteConfiguration): Plugin {
-  function sanitizeHtmlValue(value: string | undefined): string {
+function figmaSiteConfiguration(config) {
+  function sanitizeHtmlValue(value) {
     return value?.replace(/[^a-zA-Z0-9_-]/g, "") || "";
   }
-  function escapeHtmlText(value: string): string {
+  function escapeHtmlText(value) {
     return value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
   }
-  function replaceHtmlCommentSlot(html: string, slotName: string, content: string): string {
+  function replaceHtmlCommentSlot(html, slotName, content) {
     return html.replace(`<!-- ${slotName} -->`, content);
   }
 
@@ -129,7 +100,7 @@ function figmaSiteConfiguration(config: FigmaSiteConfiguration): Plugin {
         result = replaceHtmlCommentSlot(result, "figma:body-start", bodyStart);
         result = replaceHtmlCommentSlot(result, "figma:body-end", bodyEnd);
 
-        const tags: HtmlTagDescriptor[] = [];
+        const tags = [];
         if (description) {
           tags.push({
             tag: "meta",
@@ -259,99 +230,32 @@ function figmaSiteConfiguration(config: FigmaSiteConfiguration): Plugin {
  * `update` or `full-reload` so a stale overlay can't survive a
  * fixed build.
  */
-function figmaErrorOverlayReplay(): Plugin {
+function figmaErrorOverlayReplay() {
   return {
     name: "figma-error-overlay-replay",
     apply: "serve",
     configureServer(server) {
-      let lastError: object | null = null;
+      let lastError = null;
 
-      const origSend = server.ws.send.bind(server.ws) as (...args: any[]) => void;
-      server.ws.send = ((...args: any[]) => {
+      const origSend = server.ws.send.bind(server.ws);
+      server.ws.send = ((...args) => {
         const payload = args[0];
         if (payload && typeof payload === "object" && !Array.isArray(payload)) {
-          const type = (payload as { type?: string }).type;
+          const type = payload.type;
           if (type === "error") {
-            lastError = payload as object;
+            lastError = payload;
           } else if (type === "update" || type === "full-reload") {
             lastError = null;
           }
         }
         return origSend(...args);
-      }) as typeof server.ws.send;
+      });
 
       server.ws.on("connection", (socket) => {
         if (lastError !== null) {
           socket.send(JSON.stringify(lastError));
         }
       });
-    },
-  };
-}
-
-/**
- * Reload when a module that previously defined a React Refresh boundary stops
- * defining one. This happens when an agent moves a component into a new file
- * and replaces the old module with a re-export:
- *
- *   export { default } from './app/App'
- *
- * Vite otherwise accepts the update using the previous module's HMR boundary,
- * but the re-export-only transform no longer registers a replacement for the
- * mounted component family. React reports a successful refresh while leaving
- * the old tree mounted until the page is reloaded.
- */
-function figmaReactRefreshBoundaryFallback(): Plugin {
-  type ModuleNode = import("vite").ModuleNode;
-  const hadRefreshBoundary = new Map<string, boolean>();
-  const lostRefreshBoundaries = new Set<string>();
-  let sendFullReload: (() => void) | null = null;
-
-  return {
-    name: "figma-react-refresh-boundary-fallback",
-    apply: "serve",
-    enforce: "post",
-    configureServer(server) {
-      sendFullReload = () => server.ws.send({ type: "full-reload", path: "*" });
-    },
-    handleHotUpdate({ modules, server, timestamp }) {
-      if (lostRefreshBoundaries.size === 0) return;
-
-      const visited = new Set<ModuleNode>();
-      const pending = [...modules];
-      while (pending.length > 0) {
-        const current = pending.pop();
-        if (!current || visited.has(current)) continue;
-        visited.add(current);
-
-        const moduleId = current.id?.split("?")[0];
-        if (moduleId && lostRefreshBoundaries.has(moduleId)) {
-          const invalidated = new Set<ModuleNode>();
-          for (const updatedModule of modules) {
-            server.moduleGraph.invalidateModule(updatedModule, invalidated, timestamp, true);
-          }
-          sendFullReload?.();
-          return [];
-        }
-
-        pending.push(...current.importers);
-      }
-    },
-    transform(code, id) {
-      if (!/\.[jt]sx?(?:\?|$)/.test(id) || id.includes("/node_modules/")) return null;
-
-      const moduleId = id.split("?")[0] ?? id;
-      const hasRefreshBoundary = code.includes("registerExportsForReactRefresh");
-      const previousHadRefreshBoundary = hadRefreshBoundary.get(moduleId);
-      hadRefreshBoundary.set(moduleId, hasRefreshBoundary);
-
-      if (hasRefreshBoundary) lostRefreshBoundaries.delete(moduleId);
-      if (previousHadRefreshBoundary && !hasRefreshBoundary) {
-        lostRefreshBoundaries.add(moduleId);
-        queueMicrotask(() => sendFullReload?.());
-      }
-
-      return null;
     },
   };
 }
@@ -367,7 +271,7 @@ function figmaReactRefreshBoundaryFallback(): Plugin {
  * builds (`vite build`) skip it entirely so the route doesn't leak
  * into shipped bundles.
  */
-function figmaMakeKitPlugin(options: { storiesGlob: string | string[] }): Plugin {
+function figmaMakeKitPlugin(options) {
   const storiesGlob = Array.isArray(options.storiesGlob)
     ? options.storiesGlob
     : [options.storiesGlob];
@@ -411,7 +315,7 @@ function figmaMakeKitPlugin(options: { storiesGlob: string | string[] }): Plugin
           res.setHeader("Content-Type", "text/html");
           res.end(await server.transformIndexHtml(url, HTML_BOOTSTRAP));
         } catch (err) {
-          next(err as Error);
+          next(err);
         }
       });
     },
@@ -424,13 +328,13 @@ function figmaMakeKitPlugin(options: { storiesGlob: string | string[] }): Plugin
  * installed packages appear in sourcemaps. Vite otherwise reports their real
  * path, such as `libraries/<name>/`.
  */
-function figmaLinkedPackageSourcemaps(): Plugin {
-  const packageJson = JSON.parse(fs.readFileSync(path.resolve(__dirname, "package.json"), "utf8"));
+function figmaLinkedPackageSourcemaps() {
+  const packageJson = JSON.parse(fs.readFileSync(path.resolve(projectRoot, "package.json"), "utf8"));
   const linkedPackages = Object.keys({
     ...packageJson.dependencies,
     ...packageJson.devDependencies,
   }).flatMap((name) => {
-    const installedDir = path.resolve(__dirname, "node_modules", name);
+    const installedDir = path.resolve(projectRoot, "node_modules", name);
     try {
       const realDir = fs.realpathSync(installedDir);
       return realDir.split(path.sep).includes("node_modules") ? [] : [{ installedDir, realDir }];
@@ -440,11 +344,11 @@ function figmaLinkedPackageSourcemaps(): Plugin {
   });
   const sourceMappingUrl = /\/\/# sourceMappingURL=(\S+)\s*$/;
 
-  function installedPath(file: string) {
+  function installedPath(file) {
     const linked = linkedPackages.find(({ realDir }) => file.startsWith(realDir + path.sep));
     return linked && path.join(linked.installedDir, path.relative(linked.realDir, file));
   }
-  function readSourceMap(file: string, code: string) {
+  function readSourceMap(file, code) {
     const url = sourceMappingUrl.exec(code)?.[1];
     try {
       if (url?.startsWith("data:")) {
@@ -480,7 +384,7 @@ function figmaLinkedPackageSourcemaps(): Plugin {
       const code = fs.readFileSync(id, "utf8");
       const { map, mapDir } = readSourceMap(id, code);
       const sourceRoot = path.resolve(mapDir, map.sourceRoot ?? "");
-      map.sources = map.sources.map((source: string) => {
+      map.sources = map.sources.map((source) => {
         const original = path.resolve(sourceRoot, source);
         return installedPath(original) ?? original;
       });
