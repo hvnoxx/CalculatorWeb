@@ -1,6 +1,9 @@
 const state = {
   active: 'conversion',
-  conversion: { type: 'temperature', direction: 'forward', input: '25' },
+  conversion: {
+    temperature: { direction: 'forward', input: '25' },
+    distance: { direction: 'forward', input: '1' },
+  },
   tax: { income: '520000' },
   loops: { input: '5' },
   payroll: {
@@ -14,6 +17,7 @@ const state = {
   },
 };
 
+const payrollStorageKey = 'calculator-by-nick-payroll';
 const root = document.querySelector('.calculator-console');
 
 if (!root) {
@@ -118,45 +122,51 @@ function setActiveTool(toolId) {
       button.removeAttribute('aria-current');
     }
   });
+
+  const creatorTrigger = root.querySelector('[data-creator-trigger]');
+  if (creatorTrigger) {
+    creatorTrigger.classList.toggle('active', toolId === 'creator');
+  }
 }
 
 function updateConversion() {
-  const { type, direction, input } = state.conversion;
-  const value = Number(input);
-  const valid = input.trim() !== '' && Number.isFinite(value);
-  let result = null;
+  ['temperature', 'distance'].forEach((type) => {
+    const { direction, input } = state.conversion[type];
+    const value = Number(input);
+    const valid = input.trim() !== '' && Number.isFinite(value);
+    let result = null;
 
-  if (valid) {
-    if (type === 'temperature') {
-      result = direction === 'forward' ? (value * 9) / 5 + 32 : ((value - 32) * 5) / 9;
-    } else {
-      result = direction === 'forward' ? value * 3.28084 : value / 3.28084;
+    if (valid) {
+      if (type === 'temperature') {
+        result = direction === 'forward' ? (value * 9) / 5 + 32 : ((value - 32) * 5) / 9;
+      } else {
+        result = direction === 'forward' ? value * 3.28084 : value / 3.28084;
+      }
     }
-  }
 
-  const fromUnit = type === 'temperature' ? (direction === 'forward' ? 'Celsius' : 'Fahrenheit') : direction === 'forward' ? 'Meters' : 'Feet';
-  const toUnit = type === 'temperature' ? (direction === 'forward' ? 'Fahrenheit' : 'Celsius') : direction === 'forward' ? 'Feet' : 'Meters';
-  const fromSymbol = type === 'temperature' ? (direction === 'forward' ? '°C' : '°F') : direction === 'forward' ? 'm' : 'ft';
-  const toSymbol = type === 'temperature' ? (direction === 'forward' ? '°F' : '°C') : direction === 'forward' ? 'ft' : 'm';
-  const formula =
-    type === 'temperature'
-      ? direction === 'forward'
-        ? 'Formula: (°C × 9/5) + 32'
-        : 'Formula: (°F − 32) × 5/9'
-      : direction === 'forward'
-        ? 'Formula: meters × 3.28084'
-        : 'Formula: feet ÷ 3.28084';
+    const fromUnit = type === 'temperature'
+      ? (direction === 'forward' ? 'Celsius' : 'Fahrenheit')
+      : (direction === 'forward' ? 'Meters' : 'Feet');
+    const toUnit = type === 'temperature'
+      ? (direction === 'forward' ? 'Fahrenheit' : 'Celsius')
+      : (direction === 'forward' ? 'Feet' : 'Meters');
+    const fromSymbol = type === 'temperature'
+      ? (direction === 'forward' ? '°C' : '°F')
+      : (direction === 'forward' ? 'm' : 'ft');
+    const toSymbol = type === 'temperature'
+      ? (direction === 'forward' ? '°F' : '°C')
+      : (direction === 'forward' ? 'ft' : 'm');
+    const formula = type === 'temperature'
+      ? (direction === 'forward' ? 'Formula: (°C × 9/5) + 32' : 'Formula: (°F − 32) × 5/9')
+      : (direction === 'forward' ? 'Formula: meters × 3.28084' : 'Formula: feet ÷ 3.28084');
 
-  root.querySelector('[data-conversion-from-label]').textContent = fromUnit;
-  root.querySelector('[data-conversion-to-label]').textContent = toUnit;
-  root.querySelector('[data-conversion-from-symbol]').textContent = fromSymbol;
-  root.querySelector('[data-conversion-to-symbol]').textContent = toSymbol;
-  root.querySelector('[data-conversion-result]').textContent = result === null ? '—' : formatNumber(result, 4);
-  root.querySelector('[data-conversion-formula]').textContent = formula;
-  root.querySelector('[data-conversion-swap]').setAttribute('aria-label', `Switch to ${toUnit} to ${fromUnit}`);
-
-  root.querySelectorAll('[data-conversion-type]').forEach((button) => {
-    button.classList.toggle('active', button.dataset.conversionType === type);
+    root.querySelector(`[data-conversion-from-label="${type}"]`).textContent = fromUnit;
+    root.querySelector(`[data-conversion-to-label="${type}"]`).textContent = toUnit;
+    root.querySelector(`[data-conversion-from-symbol="${type}"]`).textContent = fromSymbol;
+    root.querySelector(`[data-conversion-to-symbol="${type}"]`).textContent = toSymbol;
+    root.querySelector(`[data-conversion-result="${type}"]`).textContent = result === null ? '—' : formatNumber(result, 4);
+    root.querySelector(`[data-conversion-formula="${type}"]`).textContent = formula;
+    root.querySelector(`[data-conversion-swap="${type}"]`).setAttribute('aria-label', `Switch to ${toUnit} to ${fromUnit}`);
   });
 }
 
@@ -253,8 +263,83 @@ function setPayrollMessage(message) {
   status.hidden = !message;
 }
 
+function loadPayroll() {
+  let savedEmployees;
+
+  try {
+    savedEmployees = window.localStorage.getItem(payrollStorageKey);
+  } catch {
+    setPayrollMessage('Saved payroll records are unavailable in this browser.');
+    return;
+  }
+
+  if (savedEmployees === null) return;
+
+  let employees;
+  try {
+    employees = JSON.parse(savedEmployees);
+  } catch {
+    setPayrollMessage('Saved payroll records could not be read.');
+    return;
+  }
+
+  const validEmployees =
+    Array.isArray(employees) &&
+    employees.every(
+      (employee) =>
+        employee &&
+        Number.isInteger(employee.id) &&
+        employee.id > 0 &&
+        typeof employee.name === 'string' &&
+        employee.name.trim() !== '' &&
+        Number.isFinite(employee.daysWorked) &&
+        employee.daysWorked > 0 &&
+        Number.isFinite(employee.dailyRate) &&
+        employee.dailyRate >= 0 &&
+        Number.isFinite(employee.deduction) &&
+        employee.deduction >= 0,
+    );
+
+  if (!validEmployees) {
+    setPayrollMessage('Saved payroll records have invalid data and could not be loaded.');
+    return;
+  }
+
+  state.payroll.employees = employees;
+  state.payroll.nextId = employees.reduce(
+    (nextId, employee) => Math.max(nextId, employee.id + 1),
+    1,
+  );
+  if (employees.length > 0) {
+    setPayrollMessage(`${employees.length} saved ${employees.length === 1 ? 'entry' : 'entries'} restored from this browser.`);
+  }
+}
+
+function savePayroll() {
+  try {
+    window.localStorage.setItem(payrollStorageKey, JSON.stringify(state.payroll.employees));
+    return true;
+  } catch {
+    setPayrollMessage('Payroll was updated, but could not be saved in this browser.');
+    return false;
+  }
+}
+
 root.addEventListener('click', (event) => {
   if (!(event.target instanceof Element)) return;
+
+  const creatorTrigger = event.target.closest('[data-creator-trigger]');
+  if (creatorTrigger) {
+    setActiveTool('creator');
+    creatorTrigger.classList.add('active');
+    return;
+  }
+
+  const creatorTool = event.target.closest('[data-creator-tool]');
+  if (creatorTool) {
+    setActiveTool(creatorTool.dataset.creatorTool);
+    return;
+  }
 
   const toolButton = event.target.closest('[data-tool]');
   if (toolButton) {
@@ -267,16 +352,10 @@ root.addEventListener('click', (event) => {
     return;
   }
 
-  const conversionTypeButton = event.target.closest('[data-conversion-type]');
-  if (conversionTypeButton) {
-    state.conversion.type = conversionTypeButton.dataset.conversionType;
-    state.conversion.direction = 'forward';
-    updateConversion();
-    return;
-  }
-
-  if (event.target.closest('[data-conversion-swap]')) {
-    state.conversion.direction = state.conversion.direction === 'forward' ? 'reverse' : 'forward';
+  const conversionSwapButton = event.target.closest('[data-conversion-swap]');
+  if (conversionSwapButton) {
+    const type = conversionSwapButton.dataset.conversionSwap;
+    state.conversion[type].direction = state.conversion[type].direction === 'forward' ? 'reverse' : 'forward';
     updateConversion();
     return;
   }
@@ -292,16 +371,17 @@ root.addEventListener('click', (event) => {
     state.payroll.employees = state.payroll.employees.filter((_, index) => index !== lineNumber - 1);
     state.payroll.deleteLine = '';
     root.querySelector('[data-payroll-delete]').value = '';
-    setPayrollMessage(`${removed.name} was removed from the payroll.`);
     updatePayroll();
+    if (savePayroll()) setPayrollMessage(`${removed.name} was removed from the payroll.`);
   }
 });
 
 root.addEventListener('input', (event) => {
   if (!(event.target instanceof HTMLInputElement)) return;
 
-  if (event.target.matches('[data-conversion-input]')) {
-    state.conversion.input = event.target.value;
+  if (event.target.dataset.conversionInput) {
+    const type = event.target.dataset.conversionInput;
+    state.conversion[type].input = event.target.value;
     updateConversion();
   } else if (event.target.matches('[data-tax-income]')) {
     state.tax.income = event.target.value;
@@ -352,12 +432,18 @@ root.addEventListener('submit', (event) => {
   root.querySelector('[data-payroll-days]').value = '';
   root.querySelector('[data-payroll-rate]').value = '';
   root.querySelector('[data-payroll-deduction]').value = '';
-  setPayrollMessage(`${name} was added to the payroll.`);
   updatePayroll();
+  if (savePayroll()) setPayrollMessage(`${name} was added to the payroll.`);
 });
 
+loadPayroll();
 setActiveTool(state.active);
 updateConversion();
 updateTax();
 updateLoops();
 updatePayroll();
+
+document.addEventListener('keydown', (event) => {
+  if (event.key !== 'Escape') return;
+  if (state.active === 'creator') setActiveTool('conversion');
+});

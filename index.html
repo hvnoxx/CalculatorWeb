@@ -42,6 +42,10 @@
               <span class="nav-short">Payroll</span>
             </button>
           </nav>
+
+          <button type="button" class="creator-trigger" data-creator-trigger aria-label="Open about the creator">
+            <span>About the Creator</span>
+          </button>
         </header>
 
         <div class="console-body">
@@ -54,31 +58,55 @@
                 </div>
               </header>
               <div class="workspace">
-                <div class="segmented" aria-label="Conversion category">
-                  <button type="button" class="active" data-conversion-type="temperature">Temperature</button>
-                  <button type="button" data-conversion-type="length">Distance</button>
-                </div>
+                <div class="conversion-layout">
+                  <section class="conversion-card" aria-labelledby="temperature-title">
+                    <h2 id="temperature-title">Temperature</h2>
+                    <div class="conversion-grid">
+                      <div class="field-panel">
+                        <label for="temperature-input" data-conversion-from-label="temperature">Celsius</label>
+                        <div class="number-input">
+                          <input id="temperature-input" type="number" value="25" data-conversion-input="temperature" placeholder="Enter a value" />
+                          <span data-conversion-from-symbol="temperature">°C</span>
+                        </div>
+                      </div>
 
-                <div class="conversion-grid">
-                  <div class="field-panel">
-                    <label for="convert-input" data-conversion-from-label>Celsius</label>
-                    <div class="number-input">
-                      <input id="convert-input" type="number" value="25" data-conversion-input placeholder="Enter a value" />
-                      <span data-conversion-from-symbol>°C</span>
+                      <button type="button" class="swap-button" aria-label="Switch to Fahrenheit to Celsius" data-conversion-swap="temperature">⇄</button>
+
+                      <div class="field-panel result-panel">
+                        <span class="field-label" data-conversion-to-label="temperature">Fahrenheit</span>
+                        <div class="number-input result-value">
+                          <strong data-conversion-result="temperature">77</strong>
+                          <span data-conversion-to-symbol="temperature">°F</span>
+                        </div>
+                      </div>
                     </div>
-                  </div>
+                    <p class="formula" data-conversion-formula="temperature">Formula: (°C × 9/5) + 32</p>
+                  </section>
 
-                  <button type="button" class="swap-button" aria-label="Switch to Fahrenheit to Celsius" data-conversion-swap>⇄</button>
+                  <section class="conversion-card" aria-labelledby="distance-title">
+                    <h2 id="distance-title">Distance</h2>
+                    <div class="conversion-grid">
+                      <div class="field-panel">
+                        <label for="distance-input" data-conversion-from-label="distance">Meters</label>
+                        <div class="number-input">
+                          <input id="distance-input" type="number" value="1" data-conversion-input="distance" placeholder="Enter a value" />
+                          <span data-conversion-from-symbol="distance">m</span>
+                        </div>
+                      </div>
 
-                  <div class="field-panel result-panel">
-                    <span class="field-label" data-conversion-to-label>Fahrenheit</span>
-                    <div class="number-input result-value">
-                      <strong data-conversion-result>77</strong>
-                      <span data-conversion-to-symbol>°F</span>
+                      <button type="button" class="swap-button" aria-label="Switch to Feet to Meters" data-conversion-swap="distance">⇄</button>
+
+                      <div class="field-panel result-panel">
+                        <span class="field-label" data-conversion-to-label="distance">Feet</span>
+                        <div class="number-input result-value">
+                          <strong data-conversion-result="distance">3.2808</strong>
+                          <span data-conversion-to-symbol="distance">ft</span>
+                        </div>
+                      </div>
                     </div>
-                  </div>
+                    <p class="formula" data-conversion-formula="distance">Formula: meters × 3.28084</p>
+                  </section>
                 </div>
-                <p class="formula" data-conversion-formula>Formula: (°C × 9/5) + 32</p>
               </div>
             </section>
 
@@ -178,7 +206,7 @@
               <header class="tool-header">
                 <div>
                   <h1>Simple payroll</h1>
-                  <p>Add employees, calculate pay automatically, and remove records by line number.</p>
+                  <p>Payroll entries are saved in this browser and remain visible after you reload.</p>
                 </div>
               </header>
               <div class="workspace">
@@ -239,6 +267,72 @@
                   </div>
                 </div>
               </div>
+            </section>
+            <section class="creator-page" data-tool-panel="creator" hidden>
+              <div class="creator-hero">
+                <div class="creator-hero-copy">
+                  <span class="creator-kicker"><i></i> Behind the calculations</span>
+                  <h1>Hello, I'm<br><strong>Hannah</strong><em> Sumailing.</em></h1>
+                  <p class="creator-role">CS student. Curious thinker. Creator.</p>
+                  <p class="creator-intro">The mind behind Calculator by Nick. Learning to turn ideas into useful digital experiences — one line of code, one calculation, and one discovery at a time.</p>
+                  <div class="creator-actions">
+                    <button type="button" data-home-button="true">Explore the tools <span>↗</span></button>
+                    <a href="#creator-story">A little about me <span>↓</span></a>
+                  </div>
+                  <p class="creator-location"><i></i> Always learning · Ateneo de Davao University</p>
+                </div>
+                <div class="creator-portrait" aria-label="Portrait of Hannah Sumailing">
+                  <div class="portrait-frame">
+                    <img src="assets/hannah-portrait.jpg" alt="Hannah Sumailing" />
+                  </div>
+                  <span class="curiosity-badge">Built with<br>curiosity ↗</span>
+                  <em>Learn. Build. Repeat.</em>
+                  <b>✧</b>
+                </div>
+              </div>
+
+              <div class="creator-section" id="creator-story">
+                <article>
+                  <span class="section-number">01 / About the creator</span>
+                  <h2>A student today.<br><em>A builder in the making.</em></h2>
+                  <p>Hi! I'm Hannah Sumailing, currently a Bachelor of Science in Computer Science student at Ateneo de Davao University.</p>
+                  <p>As a student, I'm still learning and exploring different areas of technology, especially programming and software development. I created this website as a way to apply what I've learned in my studies while developing something useful and practical.</p>
+                  <p>This project reflects my interest in technology, creativity, and problem-solving.</p>
+                  <div class="creator-tags"><span>Technology</span><span>Creativity</span><span>Problem-solving</span></div>
+                </article>
+                <article>
+                  <span class="section-number">02 / About the website</span>
+                  <h2>Everyday calculations.<br><em>One thoughtful space.</em></h2>
+                  <p>Welcome to <strong>Calculator by Nick!</strong> This website is designed to make everyday calculations easier and more convenient.</p>
+                  <p>It offers different tools for mathematical calculations, unit conversions, payroll, and income tax. Instead of using separate tools, users can access everything in one place.</p>
+                  <p>This website was developed as a student project to put programming knowledge into practice.</p>
+                  <div class="creator-features">
+                    <div><strong>Simple by design</strong><span>Clear inputs. Instant results.</span></div>
+                    <div><strong>Built for any screen</strong><span>Desktop, tablet, and mobile.</span></div>
+                  </div>
+                </article>
+              </div>
+
+              <div class="creator-quote">
+                <blockquote>“Learning becomes meaningful<br>when you build something with it.”</blockquote>
+                <p><span>The idea behind Calculator by Nick</span>Four coursework assignments. One place to explore, experiment, and put theory into practice.</p>
+              </div>
+
+              <div class="creator-tools">
+                <h2>A little of what I've built <b>✧</b></h2>
+                <div class="creator-tool-grid">
+                  <button type="button" data-creator-tool="conversion"><b>⇄</b><span><strong>Conversions</strong><small>A change of units.</small></span></button>
+                  <button type="button" data-creator-tool="tax"><b>₱</b><span><strong>Finance</strong><small>Make sense of tax.</small></span></button>
+                  <button type="button" data-creator-tool="loops"><b>Σ</b><span><strong>Mathematics</strong><small>Small loops. Big ideas.</small></span></button>
+                  <button type="button" data-creator-tool="payroll"><b>≡</b><span><strong>Finance</strong><small>Every workday counts.</small></span></button>
+                </div>
+              </div>
+
+              <footer class="creator-footer">
+                <div><strong>Calculator by Nick</strong><span>Don't Just Count. Fox It!</span></div>
+                <p>Created by Hannah Sumailing · ITC coursework<br>Ateneo de Davao University</p>
+                <button type="button" data-home-button="true">Back to the story ↑</button>
+              </footer>
             </section>
           </main>
         </div>
